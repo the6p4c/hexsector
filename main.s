@@ -7,10 +7,18 @@ _start:
 	; correct data segment for load address of 0x7C00
 	mov ax, 0x7C0
 	mov ds, ax
+	mov es, ax
 
 	; initialize video mode
 	mov ax, 0x000D
 	int 0x10
+
+	; load map from next sector
+	mov ax, 0x0201
+	mov cx, 0x0002
+	mov dx, 0x0000
+	mov bx, map
+	int 0x13
 
 	mov bl, 0b0000
 
@@ -304,21 +312,24 @@ overlays:
 	dw 0b00010101000
 	dw 0b00010101000
 
-%define X(a, b) (((b) << 4) | (a))
 CELL_BLUE equ 0x7
 CELL_EMPTY equ 0xF
 CELL_DISCOVERED equ 0x8
-map:
-	db X(CELL_EMPTY, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
-	db X(2 | CELL_DISCOVERED, CELL_BLUE), X(3, CELL_BLUE), X(2 | CELL_DISCOVERED, CELL_EMPTY)
-	db X(CELL_BLUE, CELL_BLUE), X(5 | CELL_DISCOVERED, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
-	db X(2 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2 | CELL_DISCOVERED, CELL_EMPTY)
-	db X(CELL_EMPTY, CELL_EMPTY), X(1 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
 
 REMAINING_SPACE equ (512 - 2) - ($ - _start)
 times REMAINING_SPACE db 0x00
 db 0x55
 db 0xAA
+
+%define X(a, b) (((b) << 4) | (a))
+maps:
+.map1:
+	db X(CELL_EMPTY, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
+	db X(2 | CELL_DISCOVERED, CELL_BLUE), X(3, CELL_BLUE), X(2 | CELL_DISCOVERED, CELL_EMPTY)
+	db X(CELL_BLUE, CELL_BLUE), X(5 | CELL_DISCOVERED, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
+	db X(2 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2 | CELL_DISCOVERED, CELL_EMPTY)
+	db X(CELL_EMPTY, CELL_EMPTY), X(1 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
+	times 512 - ($ - .map1) db 0x00
 
 %if 1
 remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
@@ -330,3 +341,5 @@ saved_cx: resw 1
 
 cursor_x: resw 1
 cursor_y: resw 1
+
+map: resb 512

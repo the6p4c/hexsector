@@ -1,3 +1,6 @@
+GRID_WIDTH equ 40
+GRID_HEIGHT equ 15
+
 _start:
 	; correct data segment for load address of 0x7C00
 	mov ax, 0x7C0
@@ -17,11 +20,11 @@ _start:
 	call draw_hex_at
 
 	inc cx
-	cmp cx, 40
+	cmp cx, GRID_WIDTH
 	jl .draw_column
 
 	inc dx
-	cmp dx, 15
+	cmp dx, GRID_HEIGHT
 	jl .draw_row
 
 	mov byte [cursor_x], 0x00
@@ -59,15 +62,23 @@ _start:
 	jmp .input_loop
 
 .input_up:
+	cmp byte [cursor_y], 0
+	je .done
 	dec byte [cursor_y]
 	jmp .done
 .input_down:
+	cmp byte [cursor_y], GRID_HEIGHT - 1
+	je .done
 	inc byte [cursor_y]
 	jmp .done
 .input_left:
+	cmp byte [cursor_x], 0
+	je .done
 	dec byte [cursor_x]
 	jmp .done
 .input_right:
+	cmp byte [cursor_x], GRID_WIDTH - 1
+	je .done
 	inc byte [cursor_x]
 	jmp .done
 

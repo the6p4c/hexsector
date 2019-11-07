@@ -88,6 +88,8 @@ _start:
 	je .input_left
 	cmp al, 'd'
 	je .input_right
+	cmp al, ' '
+	je .input_space
 	jmp .input_loop
 
 .input_up:
@@ -109,6 +111,9 @@ _start:
 	cmp byte [cursor_x], GRID_WIDTH - 1
 	je .done
 	inc byte [cursor_x]
+	jmp .done
+.input_space:
+	call set_map_discovery
 	jmp .done
 
 .done:
@@ -137,6 +142,38 @@ get_map_discovery:
 	and al, 1
 
 	pop di
+	pop cx
+	ret
+
+set_map_discovery:
+	push cx
+	push dx
+	push di
+
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+
+	mov ax, dx
+	shl ax, 1
+	add ax, dx
+	shl ax, 1
+	add ax, cx
+
+	mov cx, ax
+	and cx, 0x7
+	shr ax, 3
+
+	mov dx, 1
+	shl dx, cl
+
+	mov di, actual_map_discovery
+	add di, ax
+	or [di], dx
+
+	pop di
+	pop dx
 	pop cx
 	ret
 

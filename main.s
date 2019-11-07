@@ -34,7 +34,7 @@ _start:
 
 .input_loop:
 	; draw current cursor
-	mov ax, 0x000C
+	mov ax, 0x0002
 	call draw_hex_at_cursor
 
 	int 0x16
@@ -130,11 +130,11 @@ draw_map_cell:
 	jmp .draw
 
 .cell_undiscovered:
-	mov ah, 0x4
+	mov ah, 0xC
 	jmp .draw
 
 .cell_blue:
-	mov ah, 0x9
+	mov ah, 0xB
 	jmp .draw
 
 .draw:

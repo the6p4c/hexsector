@@ -7,10 +7,17 @@ _start:
 	; correct data segment for load address of 0x7C00
 	mov ax, 0x7C0
 	mov ds, ax
+	mov es, ax
 
 	; initialize video mode
 	mov ax, 0x000D
 	int 0x10
+
+	; initialise discovery
+	mov cx, 5
+	mov si, map_discovery
+	mov di, actual_map_discovery
+	rep movsb
 
 	mov dx, 0
 .draw_row:
@@ -34,6 +41,17 @@ _start:
 	jmp .draw
 
 .draw:
+	cmp ah, 0x0
+	je .just_draw
+
+	push ax
+	call get_map_discovery
+	cmp al, 0
+	pop ax
+	jne .just_draw
+	mov ah, 0x4
+
+.just_draw:
 	mov al, 0xF
 	call draw_hex_at
 
@@ -97,6 +115,30 @@ _start:
 	jmp .input_loop
 
 	jmp $
+
+get_map_discovery:
+	push cx
+	push di
+
+	mov ax, dx
+	shl ax, 1
+	add ax, dx
+	shl ax, 1
+	add ax, cx
+
+	mov cx, ax
+	and cx, 0x7
+	shr ax, 3
+
+	mov di, actual_map_discovery
+	add di, ax
+	mov ax, [di]
+	shr ax, cl
+	and al, 1
+
+	pop di
+	pop cx
+	ret
 
 ; cx - hex coord x
 ; dx - hex coord y
@@ -246,6 +288,11 @@ map:
 	db X(CELL_BLUE, CELL_BLUE), X(5, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
 	db X(2, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2, CELL_EMPTY)
 	db X(CELL_EMPTY, CELL_EMPTY), X(1, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
+map_discovery:
+	db 0b01000000
+	db 0b01000100
+	db 0b01000100
+	db 0b00000100
 
 times (512 - 2) - ($ - _start) db 0x00
 db 0x55
@@ -257,3 +304,5 @@ saved_cx: resw 1
 
 cursor_x: resb 1
 cursor_y: resb 1
+
+actual_map_discovery: resb 4

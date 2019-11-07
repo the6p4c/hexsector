@@ -12,7 +12,7 @@ _start:
 	mov ax, 0x000D
 	int 0x10
 
-	mov al, 0xF
+	mov ax, 0x000F
 
 	mov dx, 0
 .draw_row:
@@ -34,15 +34,14 @@ _start:
 
 .input_loop:
 	; draw current cursor
-	mov al, 0xC
+	mov ax, 0x000C
 	call draw_hex_at_cursor
 
-	mov ah, 0
 	int 0x16
 	push ax
 
 	; clear previous cursor position
-	mov al, 0xF
+	mov ax, 0x000F
 	call draw_hex_at_cursor
 
 	pop ax
@@ -127,21 +126,29 @@ draw_hex_at:
 
 ; cx - top left x
 ; dx - top left y
-; al - color
-; clobbers ax, bx, di
+; al - outer color, ah - inner color (ah = 0x00 means don't change)
 draw_hex:
-	push dx
+	pusha
 
 	mov word [saved_cx], cx
 	mov di, hexagon
 
 .draw_lines:
 	mov bx, word [di]
+	mov si, 0
 
 .draw_line:
+	push ax
 	test bx, 1
+	jnz .do_draw
+	test si, si
 	jz .dont_draw
+	cmp ah, 0x00
+	je .dont_draw
+	mov al, ah
 
+.do_draw:
+	mov si, 1
 	push bx
 	mov ah, 0x0C ; write graphics pixel
 	mov bh, 0 ; page number
@@ -149,6 +156,7 @@ draw_hex:
 	pop bx
 
 .dont_draw:
+	pop ax
 	inc cx
 
 	shr bx, 1
@@ -162,7 +170,7 @@ draw_hex:
 	cmp di, hexagon + ((HEXAGON_HEIGHT + 1) * 2)
 	jne .draw_lines
 
-	pop dx
+	popa
 	ret
 
 HEXAGON_HEIGHT equ 10

@@ -1,3 +1,5 @@
+; not important, see comment on `section .bss` line for reason
+section .text
 GRID_WIDTH equ 40
 GRID_HEIGHT equ 15
 
@@ -185,7 +187,9 @@ times (512 - 2) - ($ - _start) db 0x00
 db 0x55
 db 0xAA
 
-saved_cx: dw 0x00
+; not important, stops nasm putting the reserved space in the floppy image
+section .bss
+saved_cx: resw 1
 
-cursor_x: db 0x00
-cursor_y: db 0x00
+cursor_x: resb 1
+cursor_y: resb 1

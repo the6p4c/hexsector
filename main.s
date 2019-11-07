@@ -29,8 +29,8 @@ _start:
 	cmp dx, GRID_HEIGHT
 	jl .draw_row
 
-	mov byte [cursor_x], 0x00
-	mov byte [cursor_y], 0x00
+	mov word [cursor_x], 0
+	mov word [cursor_y], 0
 
 .input_loop:
 	; draw current cursor
@@ -61,40 +61,36 @@ _start:
 	jmp .input_loop
 
 .input_up:
-	cmp byte [cursor_y], 0
+	cmp word [cursor_y], 0
 	je .done
-	dec byte [cursor_y]
+	dec word [cursor_y]
 	jmp .done
 .input_down:
-	cmp byte [cursor_y], GRID_HEIGHT - 1
+	cmp word [cursor_y], GRID_HEIGHT - 1
 	je .done
-	inc byte [cursor_y]
+	inc word [cursor_y]
 	jmp .done
 .input_left:
-	cmp byte [cursor_x], 0
+	cmp word [cursor_x], 0
 	je .done
-	dec byte [cursor_x]
+	dec word [cursor_x]
 	jmp .done
 .input_right:
-	cmp byte [cursor_x], GRID_WIDTH - 1
+	cmp word [cursor_x], GRID_WIDTH - 1
 	je .done
-	inc byte [cursor_x]
+	inc word [cursor_x]
 	jmp .done
 .input_discover_count:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
+	mov cx, word [cursor_x]
+	mov dx, word [cursor_y]
 	call get_map_cell
 	and ah, 0b111
 	cmp ah, 0x7
 	jl .did_discover
 	jmp .done
 .input_discover_blue:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
+	mov cx, word [cursor_x]
+	mov dx, word [cursor_y]
 	call get_map_cell
 	and ah, 0b111
 	cmp ah, 0x7
@@ -177,10 +173,8 @@ get_map_cell:
 	ret
 
 draw_hex_at_cursor:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
+	mov cx, word [cursor_x]
+	mov dx, word [cursor_y]
 	; fall through to draw_hex_at
 
 ; cx - hex coord x
@@ -302,5 +296,5 @@ db 0xAA
 section .bss
 saved_cx: resw 1
 
-cursor_x: resb 1
-cursor_y: resb 1
+cursor_x: resw 1
+cursor_y: resw 1

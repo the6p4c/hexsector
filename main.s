@@ -7,63 +7,67 @@ _start:
 	mov ax, 0x0012
 	int 0x10
 
-	; select R, G and B planes (white)
-	mov dx, 0x3C4
-	mov ax, 0x0F02
-	out dx, ax
-
-	; es - segment for vram access
-	mov ax, 0xA000
-	mov es, ax
-
-	mov si, pattern
-
-mov cx, 7
-line:
-	push cx
+	mov cx, 10
+	mov dx, 10
+	call draw_hex
 
 	mov cx, 10
-subline:
-	mov ax, word [si]
-
-	test cx, 1
-	jz odd
-	mov ax, word [si+14]
-odd:
-	or [es:di], ah
-	or [es:di+1], al
-
-	inc di
-
-	loop subline
-
-	add si, 2
-	add di, 640/8-10
-
-	pop cx
-	loop line
+	mov dx, 20
+	call draw_hex
 
 	jmp $
 
-pattern:
-	dw 0b0000011111000000
-	dw 0b0000111111000000
-	dw 0b0001110000000000
-	dw 0b0011100000000000
-	dw 0b0111000000000000
-	dw 0b1110000000000000
-	dw 0b1100000000000000
+; cx - top left x
+; dx - top left y
+; clobbers cx, dx
+draw_hex:
+	mov word [saved_cx], cx
+	mov di, hexagon
 
-	dw 0b1100000000000000
-	dw 0b1110000000000000
-	dw 0b0111000000000000
-	dw 0b0011100000000000
-	dw 0b0001110000000000
-	dw 0b0000111111000000
-	dw 0b0000011111000000
+.draw_lines:
+	mov bx, word [di]
+
+.draw_line:
+	test bx, 1
+	jz .dont_draw
+
+	push bx
+	mov ax, 0x0C0F ; ah - 0x0C (write graphics pixel), al - color
+	mov bh, 0 ; page number
+	int 0x10
+	pop bx
+
+.dont_draw:
+	inc cx
+
+	shr bx, 1
+	test bx, bx ; are there still pixels in the line?
+	jnz .draw_line
+
+	mov cx, word [saved_cx]
+	inc dx
+
+	add di, 2
+	cmp di, hexagon + ((HEXAGON_HEIGHT + 1) * 2)
+	jne .draw_lines
+
+	ret
+
+HEXAGON_HEIGHT equ 10
+hexagon:
+	dw 0b00011111000
+	dw 0b00110001100
+	dw 0b01100000110
+	dw 0b11000000011
+	dw 0b10000000001
+	dw 0b10000000001
+	dw 0b11000000011
+	dw 0b01100000110
+	dw 0b00110001100
+	dw 0b00011111000
 
 times (512 - 2) - ($ - _start) db 0x00
 db 0x55
 db 0xAA
 
-shift: db 0x00
+saved_cx: dw 0x00

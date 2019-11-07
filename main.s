@@ -17,26 +17,23 @@ _start:
 
 	mov cx, 0
 .draw_column:
-	mov ax, dx
-	shl ax, 1
-	add ax, dx
-	shl ax, 1
-	add ax, cx
-	shr ax, 1
-	push cx
-	setc cl
-	mov di, map
-	push ax
-	mov ah, 0
-	mov di, map
-	add di, ax
-	pop ax
-	mov al, [di]
-	shl cl, 2
-	shr al, cl
-	mov ah, al
-	pop cx
+	call get_map_cell
+	cmp ah, CELL_EMPTY
+	je .cell_empty
+	cmp ah, CELL_BLUE
+	je .cell_blue
+	mov ah, 0x7
+	jmp .draw
 
+.cell_empty:
+	mov ah, 0x0
+	jmp .draw
+
+.cell_blue:
+	mov ah, 0x09
+	jmp .draw
+
+.draw:
 	mov al, 0xF
 	call draw_hex_at
 
@@ -100,6 +97,41 @@ _start:
 	jmp .input_loop
 
 	jmp $
+
+; cx - hex coord x
+; dx - hex coord y
+; returns: ah - map cell value
+get_map_cell:
+	push cx
+	push di
+
+	; convert x/y to map offset
+	; ax - byte offset, cl - nibble offset
+	mov ax, dx
+	shl ax, 1
+	add ax, dx
+	shl ax, 1
+	add ax, cx
+	shr ax, 1
+	setc cl
+	shl cl, 2
+
+	; retrieve byte from map
+	mov di, map
+	push ax
+	mov ah, 0
+	mov di, map
+	add di, ax
+	pop ax
+	mov ah, [di]
+
+	; retrieve nibble from byte
+	shr ah, cl
+	and ah, 0xF
+
+	pop di
+	pop cx
+	ret
 
 draw_hex_at_cursor:
 	xor cx, cx

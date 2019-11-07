@@ -227,6 +227,8 @@ draw_hex:
 
 	add cx, 20
 	add dx, 20
+	;add cx, (320 - 11 - (GRID_WIDTH - 1) * 7) / 2
+	;add dx, (200 - 15 - (GRID_HEIGHT - 1) * 10) / 2
 
 	mov word [saved_cx], cx
 	mov di, hexagon

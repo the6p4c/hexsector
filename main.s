@@ -1,7 +1,5 @@
 ; not important, see comment on `section .bss` line for reason
 section .text
-GRID_WIDTH equ 5
-GRID_HEIGHT equ 5
 
 _start:
 	; correct data segment for load address of 0x7C00
@@ -20,11 +18,18 @@ _start:
 	mov bx, map
 	int 0x13
 
+	mov al, byte [map_width]
+	dec al
+	mov byte [map_max_x], al
+	mov al, byte [map_height]
+	dec al
+	mov byte [map_max_y], al
+
 	mov bl, 0b0000
 
-	mov dl, GRID_HEIGHT - 1
+	mov dl, byte [map_max_y]
 .draw_row:
-	mov cl, GRID_WIDTH - 1
+	mov cl, byte [map_max_x]
 .draw_column:
 	call draw_map_cell
 
@@ -53,6 +58,10 @@ _start:
 
 	mov di, cursor_x
 	mov si, cursor_y
+	xor bx, bx
+	mov bl, byte [map_max_x]
+	xor cx, cx
+	mov cl, byte [map_max_y]
 
 	cmp al, 'w'
 	je .input_up
@@ -74,7 +83,7 @@ _start:
 	dec word [si]
 	jmp .input_loop
 .input_down:
-	cmp word [si], GRID_HEIGHT - 1
+	cmp word [si], cx
 	je .input_loop
 	inc word [si]
 	jmp .input_loop
@@ -84,7 +93,7 @@ _start:
 	dec word [di]
 	jmp .input_loop
 .input_right:
-	cmp word [di], GRID_WIDTH - 1
+	cmp word [di], bx
 	je .input_loop
 	inc word [di]
 	jmp .input_loop
@@ -160,11 +169,10 @@ get_map_cell:
 	push di
 
 	; convert x/y to map offset
-	mov di, dx
-	shl di, 1
-	add di, dx
-	shl di, 1
-	add di, cx
+	mov al, dl
+	mul byte [map_width]
+	add ax, cx
+	mov di, ax
 
 	; retrieve the requested byte from the map
 	mov ah, byte [map+di]
@@ -313,17 +321,22 @@ saved_cx: resw 1
 cursor_x: resw 1
 cursor_y: resw 1
 
-map: resb 512
+map: resb 510
+map_width: resb 1
+map_height: resb 1
+map_max_x: resb 1
+map_max_y: resb 1
 
 section .text
 maps:
 .map1:
-	db CELL_EMPTY, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, CELL_EMPTY, CELL_EMPTY
-	db 2 | CELL_DISCOVERED, CELL_BLUE, 3, CELL_BLUE, 2 | CELL_DISCOVERED, CELL_EMPTY
-	db CELL_BLUE, CELL_BLUE, 5 | CELL_DISCOVERED, CELL_BLUE, CELL_BLUE, CELL_EMPTY
-	db 2 | CELL_DISCOVERED, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, 2 | CELL_DISCOVERED, CELL_EMPTY
-	db CELL_EMPTY, CELL_EMPTY, 1 | CELL_DISCOVERED, CELL_EMPTY, CELL_EMPTY, CELL_EMPTY
-	times 512 - ($ - .map1) db 0x00
+	db CELL_EMPTY, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, CELL_EMPTY
+	db 2 | CELL_DISCOVERED, CELL_BLUE, 3, CELL_BLUE, 2 | CELL_DISCOVERED
+	db CELL_BLUE, CELL_BLUE, 5 | CELL_DISCOVERED, CELL_BLUE, CELL_BLUE
+	db 2 | CELL_DISCOVERED, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, 2 | CELL_DISCOVERED
+	db CELL_EMPTY, CELL_EMPTY, 1 | CELL_DISCOVERED, CELL_EMPTY, CELL_EMPTY
+	times 510 - ($ - .map1) db 0x00
+	db 5, 5
 
 %if 1
 remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'

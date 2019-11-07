@@ -24,6 +24,63 @@ _start:
 	cmp dx, 15
 	jl .draw_row
 
+	mov byte [cursor_x], 0x00
+	mov byte [cursor_y], 0x00
+
+.input_loop:
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	mov al, 0xC
+	call draw_hex_at
+
+	mov ah, 0
+	int 0x16
+	push ax
+
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	mov al, 0xF
+	call draw_hex_at
+
+	pop ax
+
+	cmp al, 'w'
+	je .input_up
+	cmp al, 's'
+	je .input_down
+	cmp al, 'a'
+	je .input_left
+	cmp al, 'd'
+	je .input_right
+	jmp .input_loop
+
+.input_up:
+	dec byte [cursor_y]
+	jmp .done
+.input_down:
+	inc byte [cursor_y]
+	jmp .done
+.input_left:
+	dec byte [cursor_x]
+	jmp .done
+.input_right:
+	inc byte [cursor_x]
+	jmp .done
+
+.done:
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	mov al, 0x1
+	call draw_hex_at
+
+	jmp .input_loop
+
 	jmp $
 
 ; cx - hex coord x
@@ -118,3 +175,6 @@ db 0x55
 db 0xAA
 
 saved_cx: dw 0x00
+
+cursor_x: db 0x00
+cursor_y: db 0x00

@@ -323,9 +323,14 @@ map:
 	db X(2 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2 | CELL_DISCOVERED, CELL_EMPTY)
 	db X(CELL_EMPTY, CELL_EMPTY), X(1 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
 
-times (512 - 2) - ($ - _start) db 0x00
+REMAINING_SPACE equ (512 - 2) - ($ - _start)
+times REMAINING_SPACE db 0x00
 db 0x55
 db 0xAA
+
+%if 1
+remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
+%endif
 
 ; not important, stops nasm putting the reserved space in the floppy image
 section .bss

@@ -4,23 +4,61 @@ _start:
 	mov ds, ax
 
 	; initialize video mode
-	mov ax, 0x0012
+	mov ax, 0x000D
 	int 0x10
 
-	mov cx, 10
-	mov dx, 10
-	call draw_hex
+	mov cx, 0
+	mov dx, 0
+	call draw_hex_at
 
-	mov cx, 10
-	mov dx, 20
-	call draw_hex
+	mov cx, 1
+	mov dx, 0
+	call draw_hex_at
+
+	mov cx, 2
+	mov dx, 0
+	call draw_hex_at
 
 	jmp $
 
+; cx - hex coord x
+; dx - hex coord y
+draw_hex_at:
+	push cx
+	push dx
+
+	; multiply x coord by 7
+	mov ax, cx
+	shl cx, 1
+	add ax, cx
+	shl cx, 1
+	add ax, cx
+	mov cx, ax
+
+	; multiply y coord by 10
+	shl dx, 1
+	mov ax, dx
+	shl ax, 2
+	add ax, dx
+	mov dx, ax
+
+	test cx, 1
+	jz .draw
+	add dx, 5
+
+.draw:
+	call draw_hex
+
+	pop dx
+	pop cx
+	ret
+
 ; cx - top left x
 ; dx - top left y
-; clobbers cx, dx
+; clobbers ax, bx, di
 draw_hex:
+	push dx
+
 	mov word [saved_cx], cx
 	mov di, hexagon
 
@@ -51,6 +89,7 @@ draw_hex:
 	cmp di, hexagon + ((HEXAGON_HEIGHT + 1) * 2)
 	jne .draw_lines
 
+	pop dx
 	ret
 
 HEXAGON_HEIGHT equ 10

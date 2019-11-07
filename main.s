@@ -1,6 +1,6 @@
 ; not important, see comment on `section .bss` line for reason
 section .text
-GRID_WIDTH equ 6
+GRID_WIDTH equ 5
 GRID_HEIGHT equ 5
 
 _start:
@@ -123,6 +123,7 @@ draw_map_cell:
 	cmp ah, CELL_BLUE
 	je .cell_blue
 	dec ah
+	mov al, 0
 	shr ax, 6
 	mov di, overlays
 	add di, ax
@@ -156,35 +157,19 @@ draw_map_cell:
 ; dx - hex coord y
 ; returns: ah - map cell value
 get_map_cell:
-	push cx
 	push di
 
 	; convert x/y to map offset
-	; ax - byte offset, cl - nibble offset
-	mov ax, dx
-	shl ax, 1
-	add ax, dx
-	shl ax, 1
-	add ax, cx
-	shr ax, 1
-	setc cl
-	shl cl, 2
+	mov di, dx
+	shl di, 1
+	add di, dx
+	shl di, 1
+	add di, cx
 
-	; retrieve byte from map
-	mov di, map
-	push ax
-	mov ah, 0
-	mov di, map
-	add di, ax
-	pop ax
-	mov ah, [di]
-
-	; retrieve nibble from byte
-	shr ah, cl
-	and ah, 0xF
+	; retrieve the requested byte from the map
+	mov ah, byte [map+di]
 
 	pop di
-	pop cx
 	ret
 
 draw_hex_at_cursor:
@@ -321,20 +306,6 @@ times REMAINING_SPACE db 0x00
 db 0x55
 db 0xAA
 
-%define X(a, b) (((b) << 4) | (a))
-maps:
-.map1:
-	db X(CELL_EMPTY, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
-	db X(2 | CELL_DISCOVERED, CELL_BLUE), X(3, CELL_BLUE), X(2 | CELL_DISCOVERED, CELL_EMPTY)
-	db X(CELL_BLUE, CELL_BLUE), X(5 | CELL_DISCOVERED, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
-	db X(2 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2 | CELL_DISCOVERED, CELL_EMPTY)
-	db X(CELL_EMPTY, CELL_EMPTY), X(1 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
-	times 512 - ($ - .map1) db 0x00
-
-%if 1
-remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
-%endif
-
 ; not important, stops nasm putting the reserved space in the floppy image
 section .bss
 saved_cx: resw 1
@@ -343,3 +314,17 @@ cursor_x: resw 1
 cursor_y: resw 1
 
 map: resb 512
+
+section .text
+maps:
+.map1:
+	db CELL_EMPTY, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, CELL_EMPTY, CELL_EMPTY
+	db 2 | CELL_DISCOVERED, CELL_BLUE, 3, CELL_BLUE, 2 | CELL_DISCOVERED, CELL_EMPTY
+	db CELL_BLUE, CELL_BLUE, 5 | CELL_DISCOVERED, CELL_BLUE, CELL_BLUE, CELL_EMPTY
+	db 2 | CELL_DISCOVERED, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, 2 | CELL_DISCOVERED, CELL_EMPTY
+	db CELL_EMPTY, CELL_EMPTY, 1 | CELL_DISCOVERED, CELL_EMPTY, CELL_EMPTY, CELL_EMPTY
+	times 512 - ($ - .map1) db 0x00
+
+%if 1
+remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
+%endif

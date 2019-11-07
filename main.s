@@ -13,7 +13,7 @@ _start:
 
 	; load map from next sector
 	mov ax, 0x0201
-	mov cx, 0x0002
+	mov cx, 0x0003
 	mov dx, 0x0000
 	mov bx, map
 	int 0x13
@@ -329,14 +329,7 @@ map_max_y: resb 1
 
 section .text
 maps:
-.map1:
-	db CELL_EMPTY, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, CELL_EMPTY
-	db 2 | CELL_DISCOVERED, CELL_BLUE, 3, CELL_BLUE, 2 | CELL_DISCOVERED
-	db CELL_BLUE, CELL_BLUE, 5 | CELL_DISCOVERED, CELL_BLUE, CELL_BLUE
-	db 2 | CELL_DISCOVERED, CELL_EMPTY, CELL_BLUE, CELL_EMPTY, 2 | CELL_DISCOVERED
-	db CELL_EMPTY, CELL_EMPTY, 1 | CELL_DISCOVERED, CELL_EMPTY, CELL_EMPTY
-	times 510 - ($ - .map1) db 0x00
-	db 5, 5
+%include "maps.s"
 
 %if 1
 remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'

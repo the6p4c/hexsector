@@ -224,6 +224,9 @@ draw_hex_at:
 draw_hex:
 	pusha
 
+	add cx, 20
+	add dx, 20
+
 	mov word [saved_cx], cx
 	mov di, hexagon
 

@@ -109,6 +109,8 @@ _start:
 ; cx - hex coord x
 ; dx - hex coord y
 draw_map_cell:
+	push word [hexagon+6]
+	push word [hexagon+12]
 	call get_map_cell
 	cmp ah, CELL_EMPTY
 	je .cell_empty
@@ -118,6 +120,16 @@ draw_map_cell:
 	and ah, 0b111
 	cmp ah, CELL_BLUE
 	je .cell_blue
+	dec ah
+	shr ax, 6
+	mov di, overlays
+	add di, ax
+	mov ax, word [hexagon+6]
+	or ax, [di]
+	mov word [hexagon+6], ax
+	mov ax, word [hexagon+12]
+	or ax, [di+2]
+	mov word [hexagon+12], ax
 	mov ah, 0x7
 	jmp .draw
 
@@ -135,7 +147,11 @@ draw_map_cell:
 
 .draw:
 	mov al, 0xF
-	jmp draw_hex_at ; will ret for us
+	call draw_hex_at ; will ret for us
+
+	pop word [hexagon+12]
+	pop word [hexagon+6]
+	ret
 
 ; cx - hex coord x
 ; dx - hex coord y
@@ -276,6 +292,25 @@ hexagon:
 	dw 0b01100000110
 	dw 0b00110001100
 	dw 0b00011111000
+overlays:
+	; 1
+	dw 0b00000100000
+	dw 0b00000000000
+	; 2
+	dw 0b00000100000
+	dw 0b00000100000
+	; 3
+	dw 0b00001010000
+	dw 0b00000100000
+	; 4
+	dw 0b00001010000
+	dw 0b00001010000
+	; 5
+	dw 0b00010101000
+	dw 0b00001010000
+	; 6
+	dw 0b00010101000
+	dw 0b00010101000
 
 %define X(a, b) (((b) << 4) | (a))
 CELL_BLUE equ 0x7

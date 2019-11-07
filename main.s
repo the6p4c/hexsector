@@ -7,53 +7,19 @@ _start:
 	; correct data segment for load address of 0x7C00
 	mov ax, 0x7C0
 	mov ds, ax
-	mov es, ax
 
 	; initialize video mode
 	mov ax, 0x000D
 	int 0x10
 
-	; initialise discovery
-	mov cx, 5
-	mov si, map_discovery
-	mov di, actual_map_discovery
-	rep movsb
+	mov bl, 0b0000
 
 	mov dx, 0
 .draw_row:
 
 	mov cx, 0
 .draw_column:
-	call get_map_cell
-	cmp ah, CELL_EMPTY
-	je .cell_empty
-	cmp ah, CELL_BLUE
-	je .cell_blue
-	mov ah, 0x7
-	jmp .draw
-
-.cell_empty:
-	mov ah, 0x0
-	jmp .draw
-
-.cell_blue:
-	mov ah, 0x09
-	jmp .draw
-
-.draw:
-	cmp ah, 0x0
-	je .just_draw
-
-	push ax
-	call get_map_discovery
-	cmp al, 0
-	pop ax
-	jne .just_draw
-	mov ah, 0x4
-
-.just_draw:
-	mov al, 0xF
-	call draw_hex_at
+	call draw_map_cell
 
 	inc cx
 	cmp cx, GRID_WIDTH
@@ -113,7 +79,8 @@ _start:
 	inc byte [cursor_x]
 	jmp .done
 .input_space:
-	call set_map_discovery
+	mov bl, 0b1000
+	call draw_map_cell_at_cursor
 	jmp .done
 
 .done:
@@ -121,61 +88,43 @@ _start:
 
 	jmp $
 
-get_map_discovery:
-	push cx
-	push di
-
-	mov ax, dx
-	shl ax, 1
-	add ax, dx
-	shl ax, 1
-	add ax, cx
-
-	mov cx, ax
-	and cx, 0x7
-	shr ax, 3
-
-	mov di, actual_map_discovery
-	add di, ax
-	mov ax, [di]
-	shr ax, cl
-	and al, 1
-
-	pop di
-	pop cx
-	ret
-
-set_map_discovery:
-	push cx
-	push dx
-	push di
-
+draw_map_cell_at_cursor:
 	xor cx, cx
 	xor dx, dx
 	mov cl, byte [cursor_x]
 	mov dl, byte [cursor_y]
+	; fall through to draw_map_cell
 
-	mov ax, dx
-	shl ax, 1
-	add ax, dx
-	shl ax, 1
-	add ax, cx
+; cx - hex coord x
+; dx - hex coord y
+draw_map_cell:
+	call get_map_cell
+	cmp ah, CELL_EMPTY
+	je .cell_empty
+	or ah, bl
+	test ah, 0b1000
+	jz .cell_undiscovered
+	and ah, 0b111
+	cmp ah, CELL_BLUE
+	je .cell_blue
+	mov ah, 0x7
+	jmp .draw
 
-	mov cx, ax
-	and cx, 0x7
-	shr ax, 3
+.cell_empty:
+	mov ah, 0x0
+	jmp .draw
 
-	mov dx, 1
-	shl dx, cl
+.cell_undiscovered:
+	mov ah, 0x4
+	jmp .draw
 
-	mov di, actual_map_discovery
-	add di, ax
-	or [di], dx
+.cell_blue:
+	mov ah, 0x9
+	jmp .draw
 
-	pop di
-	pop dx
-	pop cx
-	ret
+.draw:
+	mov al, 0xF
+	jmp draw_hex_at ; will ret for us
 
 ; cx - hex coord x
 ; dx - hex coord y
@@ -317,19 +266,15 @@ hexagon:
 	dw 0b00011111000
 
 %define X(a, b) (((b) << 4) | (a))
-CELL_BLUE equ 0xE
+CELL_BLUE equ 0x7
 CELL_EMPTY equ 0xF
+CELL_DISCOVERED equ 0x8
 map:
 	db X(CELL_EMPTY, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
-	db X(2, CELL_BLUE), X(3, CELL_BLUE), X(2, CELL_EMPTY)
-	db X(CELL_BLUE, CELL_BLUE), X(5, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
-	db X(2, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2, CELL_EMPTY)
-	db X(CELL_EMPTY, CELL_EMPTY), X(1, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
-map_discovery:
-	db 0b01000000
-	db 0b01000100
-	db 0b01000100
-	db 0b00000100
+	db X(2 | CELL_DISCOVERED, CELL_BLUE), X(3, CELL_BLUE), X(2 | CELL_DISCOVERED, CELL_EMPTY)
+	db X(CELL_BLUE, CELL_BLUE), X(5 | CELL_DISCOVERED, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
+	db X(2 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2 | CELL_DISCOVERED, CELL_EMPTY)
+	db X(CELL_EMPTY, CELL_EMPTY), X(1 | CELL_DISCOVERED, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
 
 times (512 - 2) - ($ - _start) db 0x00
 db 0x55
@@ -341,5 +286,3 @@ saved_cx: resw 1
 
 cursor_x: resb 1
 cursor_y: resb 1
-
-actual_map_discovery: resb 4

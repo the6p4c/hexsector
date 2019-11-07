@@ -1,7 +1,7 @@
 ; not important, see comment on `section .bss` line for reason
 section .text
-GRID_WIDTH equ 40
-GRID_HEIGHT equ 15
+GRID_WIDTH equ 6
+GRID_HEIGHT equ 5
 
 _start:
 	; correct data segment for load address of 0x7C00
@@ -12,13 +12,32 @@ _start:
 	mov ax, 0x000D
 	int 0x10
 
-	mov ax, 0x000F
-
 	mov dx, 0
 .draw_row:
 
 	mov cx, 0
 .draw_column:
+	mov ax, dx
+	shl ax, 1
+	add ax, dx
+	shl ax, 1
+	add ax, cx
+	shr ax, 1
+	push cx
+	setc cl
+	mov di, map
+	push ax
+	mov ah, 0
+	mov di, map
+	add di, ax
+	pop ax
+	mov al, [di]
+	shl cl, 2
+	shr al, cl
+	mov ah, al
+	pop cx
+
+	mov al, 0xF
 	call draw_hex_at
 
 	inc cx
@@ -167,7 +186,7 @@ draw_hex:
 	inc dx
 
 	add di, 2
-	cmp di, hexagon + ((HEXAGON_HEIGHT + 1) * 2)
+	cmp di, hexagon + (HEXAGON_HEIGHT * 2)
 	jne .draw_lines
 
 	popa
@@ -185,6 +204,16 @@ hexagon:
 	dw 0b01100000110
 	dw 0b00110001100
 	dw 0b00011111000
+
+%define X(a, b) (((b) << 4) | (a))
+CELL_BLUE equ 0xE
+CELL_EMPTY equ 0xF
+map:
+	db X(CELL_EMPTY, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
+	db X(2, CELL_BLUE), X(3, CELL_BLUE), X(2, CELL_EMPTY)
+	db X(CELL_BLUE, CELL_BLUE), X(5, CELL_BLUE), X(CELL_BLUE, CELL_EMPTY)
+	db X(2, CELL_EMPTY), X(CELL_BLUE, CELL_EMPTY), X(2, CELL_EMPTY)
+	db X(CELL_EMPTY, CELL_EMPTY), X(1, CELL_EMPTY), X(CELL_EMPTY, CELL_EMPTY)
 
 times (512 - 2) - ($ - _start) db 0x00
 db 0x55

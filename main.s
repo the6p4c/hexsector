@@ -13,7 +13,7 @@ _start:
 
 	; load map from next sector
 	mov ax, 0x0201
-	mov cx, 0x0003
+	mov cx, 0x0004
 	mov dx, 0x0000
 	mov bx, map
 	int 0x13
@@ -131,6 +131,8 @@ draw_map_cell:
 	and ah, 0b111
 	cmp ah, CELL_BLUE
 	je .cell_blue
+	test ah, ah
+	jz .zero
 	dec ah
 	mov al, 0
 	shr ax, 6
@@ -140,6 +142,7 @@ draw_map_cell:
 	or word [hexagon+6], ax
 	mov ax, [di+2]
 	or word [hexagon+12], ax
+.zero:
 	mov ah, 0x7
 	jmp .draw
 

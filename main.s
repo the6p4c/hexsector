@@ -54,8 +54,10 @@ _start:
 	je .input_left
 	cmp al, 'd'
 	je .input_right
-	cmp al, ' '
-	je .input_space
+	cmp al, 'x'
+	je .input_discover_count
+	cmp al, 'X'
+	je .input_discover_blue
 	jmp .input_loop
 
 .input_up:
@@ -78,22 +80,35 @@ _start:
 	je .done
 	inc byte [cursor_x]
 	jmp .done
-.input_space:
+.input_discover_count:
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	call get_map_cell
+	and ah, 0b111
+	cmp ah, 0x7
+	jl .did_discover
+	jmp .done
+.input_discover_blue:
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	call get_map_cell
+	and ah, 0b111
+	cmp ah, 0x7
+	je .did_discover
+	jmp .done
+.did_discover:
 	mov bl, 0b1000
-	call draw_map_cell_at_cursor
+	call draw_map_cell
 	jmp .done
 
 .done:
 	jmp .input_loop
 
 	jmp $
-
-draw_map_cell_at_cursor:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
-	; fall through to draw_map_cell
 
 ; cx - hex coord x
 ; dx - hex coord y

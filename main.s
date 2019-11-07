@@ -14,20 +14,17 @@ _start:
 
 	mov bl, 0b0000
 
-	mov dx, 0
+	mov dl, GRID_HEIGHT - 1
 .draw_row:
-
-	mov cx, 0
+	mov cl, GRID_WIDTH - 1
 .draw_column:
 	call draw_map_cell
 
-	inc cx
-	cmp cx, GRID_WIDTH
-	jl .draw_column
+	sub cl, 1
+	jnc .draw_column
 
-	inc dx
-	cmp dx, GRID_HEIGHT
-	jl .draw_row
+	sub dl, 1
+	jnc .draw_row
 
 	mov word [cursor_x], 0
 	mov word [cursor_y], 0
@@ -46,6 +43,9 @@ _start:
 
 	pop ax
 
+	mov di, cursor_x
+	mov si, cursor_y
+
 	cmp al, 'w'
 	je .input_up
 	cmp al, 's'
@@ -61,50 +61,44 @@ _start:
 	jmp .input_loop
 
 .input_up:
-	cmp word [cursor_y], 0
-	je .done
-	dec word [cursor_y]
-	jmp .done
+	cmp word [si], 0
+	je .input_loop
+	dec word [si]
+	jmp .input_loop
 .input_down:
-	cmp word [cursor_y], GRID_HEIGHT - 1
-	je .done
-	inc word [cursor_y]
-	jmp .done
+	cmp word [si], GRID_HEIGHT - 1
+	je .input_loop
+	inc word [si]
+	jmp .input_loop
 .input_left:
-	cmp word [cursor_x], 0
-	je .done
-	dec word [cursor_x]
-	jmp .done
+	cmp word [di], 0
+	je .input_loop
+	dec word [di]
+	jmp .input_loop
 .input_right:
-	cmp word [cursor_x], GRID_WIDTH - 1
-	je .done
-	inc word [cursor_x]
-	jmp .done
+	cmp word [di], GRID_WIDTH - 1
+	je .input_loop
+	inc word [di]
+	jmp .input_loop
 .input_discover_count:
-	mov cx, word [cursor_x]
-	mov dx, word [cursor_y]
+	mov cx, word [di]
+	mov dx, word [si]
 	call get_map_cell
 	and ah, 0b111
 	cmp ah, 0x7
 	jl .did_discover
-	jmp .done
+	jmp .input_loop
 .input_discover_blue:
-	mov cx, word [cursor_x]
-	mov dx, word [cursor_y]
+	mov cx, word [di]
+	mov dx, word [si]
 	call get_map_cell
 	and ah, 0b111
 	cmp ah, 0x7
-	je .did_discover
-	jmp .done
+	jne .input_loop
 .did_discover:
 	mov bl, 0b1000
 	call draw_map_cell
-	jmp .done
-
-.done:
 	jmp .input_loop
-
-	jmp $
 
 ; cx - hex coord x
 ; dx - hex coord y
@@ -124,12 +118,10 @@ draw_map_cell:
 	shr ax, 6
 	mov di, overlays
 	add di, ax
-	mov ax, word [hexagon+6]
-	or ax, [di]
-	mov word [hexagon+6], ax
-	mov ax, word [hexagon+12]
-	or ax, [di+2]
-	mov word [hexagon+12], ax
+	mov ax, [di]
+	or word [hexagon+6], ax
+	mov ax, [di+2]
+	or word [hexagon+12], ax
 	mov ah, 0x7
 	jmp .draw
 
@@ -143,11 +135,10 @@ draw_map_cell:
 
 .cell_blue:
 	mov ah, 0xB
-	jmp .draw
 
 .draw:
 	mov al, 0xF
-	call draw_hex_at ; will ret for us
+	call draw_hex_at
 
 	pop word [hexagon+12]
 	pop word [hexagon+6]
@@ -267,8 +258,7 @@ draw_hex:
 	inc cx
 
 	shr bx, 1
-	test bx, bx ; are there still pixels in the line?
-	jnz .draw_line
+	jnz .draw_line ; are there still pixels in the line? if so keep going
 
 	mov cx, word [saved_cx]
 	inc dx

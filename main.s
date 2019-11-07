@@ -7,17 +7,22 @@ _start:
 	mov ax, 0x000D
 	int 0x10
 
+	mov al, 0xF
+
+	mov dx, 0
+.draw_row:
+
 	mov cx, 0
-	mov dx, 0
+.draw_column:
 	call draw_hex_at
 
-	mov cx, 1
-	mov dx, 0
-	call draw_hex_at
+	inc cx
+	cmp cx, 40
+	jl .draw_column
 
-	mov cx, 2
-	mov dx, 0
-	call draw_hex_at
+	inc dx
+	cmp dx, 15
+	jl .draw_row
 
 	jmp $
 
@@ -26,6 +31,7 @@ _start:
 draw_hex_at:
 	push cx
 	push dx
+	push ax
 
 	; multiply x coord by 7
 	mov ax, cx
@@ -47,6 +53,7 @@ draw_hex_at:
 	add dx, 5
 
 .draw:
+	pop ax
 	call draw_hex
 
 	pop dx
@@ -55,6 +62,7 @@ draw_hex_at:
 
 ; cx - top left x
 ; dx - top left y
+; al - color
 ; clobbers ax, bx, di
 draw_hex:
 	push dx
@@ -70,7 +78,7 @@ draw_hex:
 	jz .dont_draw
 
 	push bx
-	mov ax, 0x0C0F ; ah - 0x0C (write graphics pixel), al - color
+	mov ah, 0x0C ; write graphics pixel
 	mov bh, 0 ; page number
 	int 0x10
 	pop bx

@@ -33,23 +33,17 @@ _start:
 	mov byte [cursor_y], 0x00
 
 .input_loop:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
+	; draw current cursor
 	mov al, 0xC
-	call draw_hex_at
+	call draw_hex_at_cursor
 
 	mov ah, 0
 	int 0x16
 	push ax
 
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
+	; clear previous cursor position
 	mov al, 0xF
-	call draw_hex_at
+	call draw_hex_at_cursor
 
 	pop ax
 
@@ -85,19 +79,20 @@ _start:
 	jmp .done
 
 .done:
-	xor cx, cx
-	xor dx, dx
-	mov cl, byte [cursor_x]
-	mov dl, byte [cursor_y]
-	mov al, 0x1
-	call draw_hex_at
-
 	jmp .input_loop
 
 	jmp $
 
+draw_hex_at_cursor:
+	xor cx, cx
+	xor dx, dx
+	mov cl, byte [cursor_x]
+	mov dl, byte [cursor_y]
+	; fall through to draw_hex_at
+
 ; cx - hex coord x
 ; dx - hex coord y
+; al - color
 draw_hex_at:
 	push cx
 	push dx

@@ -71,9 +71,9 @@ _start:
 	je .input_left
 	cmp al, 'd'
 	je .input_right
-	cmp al, 'x'
+	cmp al, 'p'
 	je .input_discover_count
-	cmp al, 'X'
+	cmp al, 'o'
 	je .input_discover_blue
 	jmp .input_loop
 

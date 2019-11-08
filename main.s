@@ -15,7 +15,7 @@ _start:
 	; load map from next sector
 	mov ax, 0x0201
 	mov cx, 0x0002
-	mov dx, 0x0000
+	mov dh, 0x00 ; drive number in dl prepopulated at boot
 	mov bx, map
 	int 0x13
 

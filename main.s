@@ -16,8 +16,15 @@ _start:
 	mov ax, 0x0201
 	mov cx, 0x0002
 	mov dh, 0x00 ; drive number in dl prepopulated at boot
+	; es populated above
 	mov bx, map
 	int 0x13
+
+	; test print
+	mov cx, 20*7
+	mov dx, 0
+	mov di, 'C'*16
+	call put_char
 
 	mov al, byte [map_max_x]
 	inc al
@@ -239,8 +246,8 @@ draw_hex:
 	;add dx, (200 - 15 - (GRID_HEIGHT - 1) * 10) / 2
 	shl cx, 1
 	shl dx, 1
-	add cx, 20
-	add dx, 20
+	;add cx, 20
+	;add dx, 20
 
 	mov word [saved_cx], cx
 	mov di, hexagon
@@ -285,6 +292,41 @@ draw_hex:
 	inc di
 	cmp di, hexagon + (HEXAGON_HEIGHT * 2)
 	jne .draw_lines
+
+	popa
+	ret
+
+put_char:
+	pusha
+	mov word [saved_cx], cx
+
+	push dx
+	mov ax, 0x1130
+	mov bh, 0x06
+	int 0x10
+	pop dx
+
+.draw_line:
+	mov cx, word [saved_cx]
+	mov al, byte [es:bp+di]
+.draw_pixel:
+	test al, 1
+	jz .next
+
+	push ax
+	mov ax, 0x0CFF
+	mov bx, 0x0001
+	int 0x10
+	pop ax
+.next:
+	dec cx
+	shr al, 1
+	jnz .draw_pixel
+
+	inc di
+	inc dx
+	cmp dx, 16
+	jne .draw_line
 
 	popa
 	ret

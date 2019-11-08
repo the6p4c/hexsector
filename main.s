@@ -1,5 +1,6 @@
 ; not important, see comment on `section .bss` line for reason
 section .text
+cpu 186
 
 _start:
 	; correct data segment for load address of 0x7C00

@@ -128,18 +128,24 @@ draw_map_cell:
 	and ah, 0b111
 	cmp ah, CELL_BLUE
 	je .cell_blue
-	test ah, ah
-	jz .zero
-	dec ah
-	mov al, 0
-	shr ax, 6
-	mov di, overlays
-	add di, ax
-	mov ax, [di]
-	or word [hexagon+6], ax
-	mov ax, [di+2]
-	or word [hexagon+12], ax
-.zero:
+
+	; prepare ax for overlay calculation (we want di = ah)
+	mov di, ax
+	shr di, 8
+
+	; top row overlay = (count + 1) >> 1
+	push di
+	inc di
+	shr di, 1
+	mov al, byte [overlays+di]
+	or byte [hexagon+6], al
+	pop di
+
+	; bottom row overlay = count >> 1
+	shr di, 1
+	mov al, byte [overlays+di]
+	or byte [hexagon+12], al
+
 	mov ah, 0x7
 	jmp .draw
 
@@ -282,6 +288,7 @@ draw_hex:
 	ret
 
 HEXAGON_HEIGHT equ 10
+align 2 ; required for drawing logic - allows rounding to nearest word with & ~1
 hexagon:
 	dw 0b00011111000
 	dw 0b00110001100
@@ -294,24 +301,12 @@ hexagon:
 	dw 0b00110001100
 	dw 0b00011111000
 overlays:
-	; 1
-	dw 0b00000100000
-	dw 0b00000000000
-	; 2
-	dw 0b00000100000
-	dw 0b00000100000
-	; 3
-	dw 0b00001010000
-	dw 0b00000100000
-	; 4
-	dw 0b00001010000
-	dw 0b00001010000
-	; 5
-	dw 0b00010101000
-	dw 0b00001010000
-	; 6
-	dw 0b00010101000
-	dw 0b00010101000
+	; only need to be one byte long since they're always within the last byte of
+	; each word of the hexagon pattern
+	db 0b00000000
+	db 0b00100000
+	db 0b01010000
+	db 0b10101000
 
 CELL_BLUE equ 0x7
 CELL_EMPTY equ 0xF

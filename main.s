@@ -239,39 +239,36 @@ draw_hex:
 .draw_lines:
 	push di
 	and di, 0xFFFE
-	mov bx, word [di]
+	mov si, word [di]
 	pop di
-	mov si, 0
+	mov bl, 0
 
 .draw_line:
 	push ax
-	test bx, 1
+	test si, 1
 	jnz .do_draw
-	test si, si
+	test bl, bl
 	jz .dont_draw
 	cmp ah, 0x00
 	je .dont_draw
 	mov al, ah
 
 .do_draw:
-	mov si, 1
-	push bx
+	mov bl, 1
 	mov ah, 0x0C ; write graphics pixel
 	mov bh, 0 ; page number
 	int 0x10
+
 	push cx
 	inc cx
-	mov ah, 0x0C ; write graphics pixel
-	mov bh, 0 ; page number
 	int 0x10
 	pop cx
-	pop bx
 
 .dont_draw:
 	pop ax
 	add cx, 2
 
-	shr bx, 1
+	shr si, 1
 	jnz .draw_line ; are there still pixels in the line? if so keep going
 
 	mov cx, word [saved_cx]

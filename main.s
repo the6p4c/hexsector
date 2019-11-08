@@ -44,12 +44,25 @@ _start:
 	sub dl, 1
 	jnc .draw_row
 
+	; initialises both cursor_x and cursor_y
 	mov word [cursor_x], 0
-	mov word [cursor_y], 0
 
 .input_loop:
 	mov di, cursor_x
 	mov si, cursor_y
+
+	; both an coordinate which has gone off the high value edge and one which
+	; has gone past zero will result in big numbers (0 - 1 = 0xFF, which will
+	; always be bigger than the max coord)
+	mov ax, word [map_max_x] ; al = map_max_y, ah = map_max_x
+	cmp byte [di], ah
+	jbe .check_y
+	mov byte [di], 0
+.check_y:
+	cmp byte [si], al
+	jbe .checks_done
+	mov byte [si], 0
+.checks_done:
 
 	; draw current cursor
 	mov ax, 0x0002
@@ -63,11 +76,6 @@ _start:
 	call draw_hex_at_cursor
 
 	pop ax
-
-	xor bx, bx
-	mov bl, byte [map_max_x]
-	xor cx, cx
-	mov cl, byte [map_max_y]
 
 	cmp al, 'w'
 	je .input_up
@@ -84,24 +92,16 @@ _start:
 	jmp .input_loop
 
 .input_up:
-	cmp word [si], 0
-	je .input_loop
-	dec word [si]
+	dec byte [si]
 	jmp .input_loop
 .input_down:
-	cmp word [si], cx
-	je .input_loop
-	inc word [si]
+	inc byte [si]
 	jmp .input_loop
 .input_left:
-	cmp word [di], 0
-	je .input_loop
-	dec word [di]
+	dec byte [di]
 	jmp .input_loop
 .input_right:
-	cmp word [di], bx
-	je .input_loop
-	inc word [di]
+	inc byte [di]
 	jmp .input_loop
 .input_discover_count:
 	call get_map_cell_at_cursor
@@ -119,8 +119,8 @@ _start:
 	call draw_map_cell
 	jmp .input_loop
 
-; cx - hex coord x
-; dx - hex coord y
+; cl - hex coord x
+; dl - hex coord y
 draw_map_cell:
 	push word [hexagon+6]
 	push word [hexagon+12]
@@ -175,12 +175,12 @@ draw_map_cell:
 
 ; only works inside game loop
 get_map_cell_at_cursor:
-	mov cx, word [di]
-	mov dx, word [si]
+	mov cl, byte [di]
+	mov dl, byte [si]
 	; fall through to get_map_cell
 
-; cx - hex coord x
-; dx - hex coord y
+; cl - hex coord x
+; dl - hex coord y
 ; returns: ah - map cell value
 get_map_cell:
 	push di
@@ -188,7 +188,7 @@ get_map_cell:
 	; convert x/y to map offset
 	mov al, dl
 	mul byte [map_width]
-	add ax, cx
+	add al, cl
 	mov di, ax
 
 	; retrieve the requested byte from the map
@@ -199,35 +199,35 @@ get_map_cell:
 
 ; only works inside game loop
 draw_hex_at_cursor:
-	mov cx, word [di]
-	mov dx, word [si]
+	mov cl, byte [di]
+	mov dl, byte [si]
 	; fall through to draw_hex_at
 
-; cx - hex coord x
-; dx - hex coord y
+; cl - hex coord x
+; dl - hex coord y
 ; al - color
 draw_hex_at:
 	pusha
 	push ax
 
 	; multiply x coord by 7
-	mov ax, cx
-	shl cx, 1
-	add ax, cx
-	shl cx, 1
-	add ax, cx
-	mov cx, ax
+	mov al, cl
+	shl cl, 1
+	add al, cl
+	shl cl, 1
+	add al, cl
+	mov cl, al
 
 	; multiply y coord by 10
-	shl dx, 1
-	mov ax, dx
-	shl ax, 2
-	add ax, dx
-	mov dx, ax
+	shl dl, 1
+	mov al, dl
+	shl al, 2
+	add al, dl
+	mov dl, al
 
-	test cx, 1
+	test cl, 1
 	jz .draw
-	add dx, 5
+	add dl, 5
 
 .draw:
 	pop ax
@@ -236,18 +236,16 @@ draw_hex_at:
 	popa
 	ret
 
-; cx - top left x
-; dx - top left y
+; cl - top left x
+; dl - top left y
 ; al - outer color, ah - inner color (ah = 0x00 means don't change)
 draw_hex:
 	pusha
 
-	;add cx, (320 - 11 - (GRID_WIDTH - 1) * 7) / 2
-	;add dx, (200 - 15 - (GRID_HEIGHT - 1) * 10) / 2
+	mov ch, 0
 	shl cx, 1
+	mov dh, 0
 	shl dx, 1
-	;add cx, 20
-	;add dx, 20
 
 	mov word [saved_cx], cx
 	mov di, hexagon
@@ -365,8 +363,8 @@ db 0xAA
 section .bss
 saved_cx: resw 1
 
-cursor_x: resw 1
-cursor_y: resw 1
+cursor_x: resb 1
+cursor_y: resb 1
 
 map: resb 510
 map_max_x: resb 1

@@ -41,6 +41,9 @@ _start:
 	mov word [cursor_y], 0
 
 .input_loop:
+	mov di, cursor_x
+	mov si, cursor_y
+
 	; draw current cursor
 	mov ax, 0x0002
 	call draw_hex_at_cursor
@@ -54,8 +57,6 @@ _start:
 
 	pop ax
 
-	mov di, cursor_x
-	mov si, cursor_y
 	xor bx, bx
 	mov bl, byte [map_max_x]
 	xor cx, cx
@@ -96,17 +97,13 @@ _start:
 	inc word [di]
 	jmp .input_loop
 .input_discover_count:
-	mov cx, word [di]
-	mov dx, word [si]
-	call get_map_cell
+	call get_map_cell_at_cursor
 	and ah, 0b111
 	cmp ah, 0x7
 	jl .did_discover
 	jmp .input_loop
 .input_discover_blue:
-	mov cx, word [di]
-	mov dx, word [si]
-	call get_map_cell
+	call get_map_cell_at_cursor
 	and ah, 0b111
 	cmp ah, 0x7
 	jne .input_loop
@@ -169,6 +166,12 @@ draw_map_cell:
 	pop word [hexagon+6]
 	ret
 
+; only works inside game loop
+get_map_cell_at_cursor:
+	mov cx, word [di]
+	mov dx, word [si]
+	; fall through to get_map_cell
+
 ; cx - hex coord x
 ; dx - hex coord y
 ; returns: ah - map cell value
@@ -187,17 +190,17 @@ get_map_cell:
 	pop di
 	ret
 
+; only works inside game loop
 draw_hex_at_cursor:
-	mov cx, word [cursor_x]
-	mov dx, word [cursor_y]
+	mov cx, word [di]
+	mov dx, word [si]
 	; fall through to draw_hex_at
 
 ; cx - hex coord x
 ; dx - hex coord y
 ; al - color
 draw_hex_at:
-	push cx
-	push dx
+	pusha
 	push ax
 
 	; multiply x coord by 7
@@ -223,8 +226,7 @@ draw_hex_at:
 	pop ax
 	call draw_hex
 
-	pop dx
-	pop cx
+	popa
 	ret
 
 ; cx - top left x
@@ -261,9 +263,8 @@ draw_hex:
 	mov al, ah
 
 .do_draw:
-	mov bl, 1
 	mov ah, 0x0C ; write graphics pixel
-	mov bh, 0 ; page number
+	mov bx, 0x0001 ; bh = page number for int, bl = 1 for tracking if inside
 	int 0x10
 
 	push cx

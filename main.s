@@ -13,17 +13,14 @@ _start:
 
 	; load map from next sector
 	mov ax, 0x0201
-	mov cx, 0x0004
+	mov cx, 0x0002
 	mov dx, 0x0000
 	mov bx, map
 	int 0x13
 
-	mov al, byte [map_width]
-	dec al
-	mov byte [map_max_x], al
-	mov al, byte [map_height]
-	dec al
-	mov byte [map_max_y], al
+	mov al, byte [map_max_x]
+	inc al
+	mov byte [map_width], al
 
 	mov bl, 0b0000
 
@@ -325,10 +322,9 @@ cursor_x: resw 1
 cursor_y: resw 1
 
 map: resb 510
-map_width: resb 1
-map_height: resb 1
 map_max_x: resb 1
 map_max_y: resb 1
+map_width: resb 1
 
 section .text
 maps:

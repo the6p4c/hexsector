@@ -34,6 +34,6 @@ for row in range(num_rows):
             s += ', '
     s += '\n'
 s += f'\ttimes 510 - ($ - .{label}) db 0x00\n'
-s += f'\tdb {num_columns}, {num_rows}\n'
+s += f'\tdb {num_columns - 1}, {num_rows - 1}\n'
 
 print(s, end='')

@@ -226,16 +226,21 @@ draw_hex_at:
 draw_hex:
 	pusha
 
-	add cx, 20
-	add dx, 20
 	;add cx, (320 - 11 - (GRID_WIDTH - 1) * 7) / 2
 	;add dx, (200 - 15 - (GRID_HEIGHT - 1) * 10) / 2
+	shl cx, 1
+	shl dx, 1
+	add cx, 20
+	add dx, 20
 
 	mov word [saved_cx], cx
 	mov di, hexagon
 
 .draw_lines:
+	push di
+	and di, 0xFFFE
 	mov bx, word [di]
+	pop di
 	mov si, 0
 
 .draw_line:
@@ -254,11 +259,17 @@ draw_hex:
 	mov ah, 0x0C ; write graphics pixel
 	mov bh, 0 ; page number
 	int 0x10
+	push cx
+	inc cx
+	mov ah, 0x0C ; write graphics pixel
+	mov bh, 0 ; page number
+	int 0x10
+	pop cx
 	pop bx
 
 .dont_draw:
 	pop ax
-	inc cx
+	add cx, 2
 
 	shr bx, 1
 	jnz .draw_line ; are there still pixels in the line? if so keep going
@@ -266,7 +277,7 @@ draw_hex:
 	mov cx, word [saved_cx]
 	inc dx
 
-	add di, 2
+	inc di
 	cmp di, hexagon + (HEXAGON_HEIGHT * 2)
 	jne .draw_lines
 

@@ -120,11 +120,11 @@ _start:
 	jne .input_loop
 
 .input_discover_count:
-	cmp bl, 0x7
+	cmp bl, CELL_BLUE
 	jl .did_discover
 	jmp .made_mistake
 .input_discover_blue:
-	cmp bl, 0x7
+	cmp bl, CELL_BLUE
 	jne .made_mistake
 .did_discover:
 	or byte [map+di], CELL_DISCOVERED

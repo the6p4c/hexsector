@@ -1,24 +1,24 @@
 all: floppy.img Makefile
 
 clean:
-	rm -f floppy.img main.bin maps.bin maps.s
+	rm -f floppy.img main.bin maps.bin maps.asm
 
 floppy.img: main.bin maps.bin
 	cat main.bin > floppy.img
 	cat maps.bin >> floppy.img
 
-main.bin: main.s map_defs.inc
+main.bin: main.asm map_defs.asm
 	nasm -o $@ $<
 
-maps.bin: maps.s map_defs.inc
+maps.bin: maps.asm map_defs.asm
 	nasm -o $@ $<
 
-maps.s: maps/map1.txt maps/map2.txt maps/map3.txt maps/map4.txt generate.py
-	echo "%include \"map_defs.inc\"" > maps.s
-	echo "maps:" >> maps.s
-	python generate.py maps/map1.txt >> maps.s
-	python generate.py maps/map2.txt >> maps.s
-	python generate.py maps/map3.txt >> maps.s
-	python generate.py maps/map4.txt >> maps.s
+maps.asm: maps/map1.txt maps/map2.txt maps/map3.txt maps/map4.txt generate.py
+	echo "%include \"map_defs.asm\"" > maps.asm
+	echo "maps:" >> maps.asm
+	python generate.py maps/map1.txt >> maps.asm
+	python generate.py maps/map2.txt >> maps.asm
+	python generate.py maps/map3.txt >> maps.asm
+	python generate.py maps/map4.txt >> maps.asm
 
 .PHONY: all clean

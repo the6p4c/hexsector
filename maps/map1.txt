@@ -1,3 +1,4 @@
+; from hexcells, level 1-2 / 02 (left hand side)
 ee d2 ub d2 ee
 ee ub ub ee ee
 ub u3 d5 ub d1

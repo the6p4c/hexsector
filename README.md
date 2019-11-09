@@ -1,5 +1,6 @@
 hexsector
 =========
+[**> Download floppy.img <**](https://github.com/The6P4C/hexsector/releases/download/v1.0/floppy.img)
 
 A boot sector sized (510 byte) clone of the game [Hexcells](https://store.steampowered.com/app/265890/Hexcells/). Cheap as chips, great puzzle game - pick it up if you haven't already.
 

@@ -1,8 +1,13 @@
+%include "map_defs.inc"
+
 ; not important, see comment on `section .bss` line for reason
 section .text
 cpu 186
+org 0
 
 _start:
+	jmp 0x7C0:.start
+.start:
 	; correct data segment for load address of 0x7C00
 	mov ax, 0x7C0
 	mov ds, ax
@@ -14,7 +19,7 @@ _start:
 
 	; load map from next sector
 	mov ax, 0x0201
-	mov cx, 0x0002
+	mov cx, 0x0004
 	mov dh, 0x00 ; drive number in dl prepopulated at boot
 	; es populated above
 	mov bx, map
@@ -36,8 +41,6 @@ _start:
 	mov al, byte [map_max_x]
 	inc al
 	mov byte [map_width], al
-
-	mov bl, 0b0000
 
 	mov dl, byte [map_max_y]
 .draw_row:
@@ -103,9 +106,13 @@ _start:
 	; the next two inputs we check for both rely on this
 	push ax
 	call get_map_cell_at_cursor
-	and ah, 0b111
 	mov bl, ah
 	pop ax
+
+	test bl, CELL_DISCOVERED
+	jnz .input_loop
+
+	and bl, CELL_VALUE_MASK
 
 	cmp al, 'o'
 	je .input_discover_blue
@@ -120,7 +127,7 @@ _start:
 	cmp bl, 0x7
 	jne .made_mistake
 .did_discover:
-	mov bl, 0b1000
+	or byte [map+di], CELL_DISCOVERED
 	call draw_map_cell
 	jmp .input_loop
 .made_mistake:
@@ -150,10 +157,9 @@ draw_map_cell:
 	call get_map_cell
 	cmp ah, CELL_EMPTY
 	je .cell_empty
-	or ah, bl
-	test ah, 0b1000
+	test ah, CELL_DISCOVERED
 	jz .cell_undiscovered
-	and ah, 0b111
+	and ah, CELL_VALUE_MASK
 	cmp ah, CELL_BLUE
 	je .cell_blue
 
@@ -206,7 +212,7 @@ get_map_cell_at_cursor:
 ; dl - hex coord y
 ; returns: ah - map cell value
 get_map_cell:
-	push di
+	;push di
 
 	; convert x/y to map offset
 	mov al, dl
@@ -217,7 +223,7 @@ get_map_cell:
 	; retrieve the requested byte from the map
 	mov ah, byte [map+di]
 
-	pop di
+	;pop di
 	ret
 
 ; only works inside game loop
@@ -376,14 +382,14 @@ overlays:
 	db 0b01010000
 	db 0b10101000
 
-CELL_BLUE equ 0x7
-CELL_EMPTY equ 0xF
-CELL_DISCOVERED equ 0x8
-
 REMAINING_SPACE equ (512 - 2) - ($ - _start)
 times REMAINING_SPACE db 0x00
 db 0x55
 db 0xAA
+
+%if 0
+remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
+%endif
 
 ; not important, stops nasm putting the reserved space in the floppy image
 section .bss
@@ -397,11 +403,3 @@ map: resb 510
 map_max_x: resb 1
 map_max_y: resb 1
 map_width: resb 1
-
-section .text
-maps:
-%include "maps.s"
-
-%if 1
-remaining_space: db 'There are ', '0' + REMAINING_SPACE / 100 % 10, '0' + REMAINING_SPACE / 10 % 10, '0' + REMAINING_SPACE % 10, ' bytes remaining'
-%endif

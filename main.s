@@ -105,23 +105,23 @@ _start:
 	; We'll need both the maximum X and Y values, so load them in one go
 	mov bx, word [map_max_x] ; bl = map_max_x, bh = map_max_y
 
-	; The code at .input_dec and .input_inc expects di to point to the cursor
+	; The code at .cursor_dec and .cursor_inc expects di to point to the cursor
 	; position byte we're interested in (for keys 'a' and 'd' that's the X
 	; coordinate, which we loaded di with above) and for bl to store the maximum
 	; value for that coordinate.
 	cmp al, 'a'
-	je .input_dec
+	je .cursor_dec
 	cmp al, 'd'
-	je .input_inc
+	je .cursor_inc
 
 	; Moving to the controls for the Y coordinate, set up the values of di and
-	; bl as .input_dec and .input_inc expect
+	; bl as .cursor_dec and .cursor_inc expect
 	mov bl, bh ; Set our maximum value to map_max_y
 	inc di ; di was cursor_x, now point to cursor_y
 	cmp al, 'w'
-	je .input_dec
+	je .cursor_dec
 	cmp al, 's'
-	je .input_inc
+	je .cursor_inc
 	dec di ; Restore di back to cursor_x
 
 	; We've done all our cursor movement handling, so all that we now need to
@@ -146,13 +146,16 @@ _start:
 	cmp al, 'p'
 	jne .input_loop
 
-.input_discover_count:
+.input_discover_grey:
 	cmp bl, CELL_BLUE
 	jl .did_discover
 	jmp .made_mistake
+
 .input_discover_blue:
 	cmp bl, CELL_BLUE
 	jne .made_mistake
+	; Falls through to .did_discover if it wasn't a mistake
+
 .did_discover:
 	; Our call to get_map_cell_at_cursor above left the index into the map of
 	; the cell under the cursor in di. We'll use it to set the discovered bit
@@ -161,6 +164,7 @@ _start:
 	or byte [map+di], CELL_DISCOVERED
 	call draw_map_cell
 	jmp .input_loop
+
 .made_mistake:
 	mov ax, word [mistakes]
 	inc ax
@@ -171,12 +175,13 @@ _start:
 	mov word [mistakes], ax
 	jmp .input_loop
 
-.input_dec:
+.cursor_dec:
 	cmp byte [di], 0
 	je .input_loop
 	dec byte [di]
 	jmp .input_loop
-.input_inc:
+
+.cursor_inc:
 	cmp byte [di], bl
 	je .input_loop
 	inc byte [di]
@@ -367,7 +372,7 @@ draw_hex_at:
 	mov word [saved_cx], cx
 	mov di, hexagon
 
-.draw_lines:
+.draw_line:
 	; di is "double counting" as we go, to upscale by 2 in the vertical
 	; direction. Since di is also our pointer to the current row of the pattern,
 	; we need to make sure when we read the next row, we're reading just one row
@@ -386,7 +391,7 @@ draw_hex_at:
 	; the outline yet?".
 	mov bl, 0
 
-.draw_line:
+.draw_pixel:
 	push ax
 
 	; Does the pattern say this pixel should be filled in? If it does, draw it.
@@ -428,7 +433,7 @@ draw_hex_at:
 	add cx, 2
 
 	shr si, 1
-	jnz .draw_line ; Are there still pixels in the line? If so, keep going
+	jnz .draw_pixel ; Are there still pixels in the line? If so, keep going
 
 	; We've finished drawing one row, so jump back to the left edge and move
 	; down a row
@@ -440,7 +445,7 @@ draw_hex_at:
 	; the last row - so we're finished and can return.
 	inc di
 	cmp di, hexagon + HEXAGON_HEIGHT * 2
-	jne .draw_lines
+	jne .draw_line
 
 	popa
 	ret

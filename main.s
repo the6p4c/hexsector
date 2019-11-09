@@ -26,12 +26,12 @@ _start:
 	int 0x13
 
 	; initialises cursor_x, cursor_y and mistakes
-	; slightly shorter than manually zeroing each, and also shorter than
-	; two word writes
+	; using ax is shorter than an immediate on both stores (would be two bytes
+	; of immediate per store, whereas a mov ax, 0 is a one byte immediate and a
+	; store from ax is a one byte instruction)
 	mov ax, 0
-	mov di, cursor_x
-	mov cx, 2
-	rep stosw
+	mov word [cursor_x], ax
+	mov word [mistakes], ax
 
 	; load pointer to font data into es:bp
 	mov ax, 0x1130

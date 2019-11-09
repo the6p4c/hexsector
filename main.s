@@ -17,6 +17,16 @@ _start:
 	mov ax, 0x000D
 	int 0x10
 
+	; initialises cursor_x, cursor_y and mistakes
+	; using ax is shorter than an immediate on both stores (would be two bytes
+	; of immediate per store, whereas a mov ax, 0 is a one byte immediate and a
+	; store from ax is a one byte instruction)
+	; we're reusing the ah=0x00 from the int 0x10 call above to optimise this,
+	; since mov al, 0 is shorter than mov ax, 0
+	mov al, 0
+	mov word [cursor_x], ax
+	mov word [mistakes], ax
+
 	; load map from next sector
 	mov ax, 0x0201
 	mov cx, 0x0004
@@ -24,14 +34,6 @@ _start:
 	; es populated above
 	mov bx, map
 	int 0x13
-
-	; initialises cursor_x, cursor_y and mistakes
-	; using ax is shorter than an immediate on both stores (would be two bytes
-	; of immediate per store, whereas a mov ax, 0 is a one byte immediate and a
-	; store from ax is a one byte instruction)
-	mov ax, 0
-	mov word [cursor_x], ax
-	mov word [mistakes], ax
 
 	; load pointer to font data into es:bp
 	mov ax, 0x1130
@@ -69,19 +71,6 @@ _start:
 	mov di, cursor_x
 	mov si, cursor_y
 
-	; both an coordinate which has gone off the high value edge and one which
-	; has gone past zero will result in big numbers (0 - 1 = 0xFF, which will
-	; always be bigger than the max coord)
-;	mov ax, word [map_max_x] ; al = map_max_y, ah = map_max_x
-;	cmp byte [di], ah
-;	jbe .check_y
-;	mov byte [di], 0
-;.check_y:
-;	cmp byte [si], al
-;	jbe .checks_done
-;	mov byte [si], 0
-;.checks_done:
-
 	; draw current cursor
 	mov ax, 0x0002
 	call draw_hex_at_cursor
@@ -94,11 +83,14 @@ _start:
 	call draw_hex_at_cursor
 	pop ax
 
+	mov bx, word [map_max_x] ; bl = map_max_x, bh = map_max_y
+
 	cmp al, 'a'
 	je .input_dec
 	cmp al, 'd'
 	je .input_inc
 
+	mov bl, bh ; set our maximum comparison value to map_max_y
 	inc di ; di was cursor_x, now point to cursor_y
 	cmp al, 'w'
 	je .input_dec
@@ -140,9 +132,13 @@ _start:
 	mov word [mistakes], ax
 	jmp .input_loop
 .input_dec:
+	cmp byte [di], 0
+	je .input_loop
 	dec byte [di]
 	jmp .input_loop
 .input_inc:
+	cmp byte [di], bl
+	je .input_loop
 	inc byte [di]
 	jmp .input_loop
 

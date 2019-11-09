@@ -1,0 +1,14 @@
+ee ub u2 ub u2 db d2 ub ee
+u1 d1 u1 u2 u2 d1 u1 u1 ee
+ee ee ee d1 db u1 ee ee ee
+u1 ub u2 u2 u2 u1 u1 ee ee
+ee u1 d2 ub u2 db d2 ub ee
+ee ee u1 u2 u2 u1 ee ee ee
+ee ub u1 u1 ub u1 u1 ee ee
+ee u1 u1 u2 d2 u2 ub ee ee
+ee ee ee db u2 ub ee ee ee
+ub d1 u2 u2 u2 u2 u1 ub ee
+ee ee u1 db u2 db u1 u1 ee
+ee ee ee u2 u2 u1 ee ee ee
+d0 u1 u2 d2 db u1 u1 u1 d0
+u1 ub ub u2 u1 u1 db u1 ee

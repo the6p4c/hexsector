@@ -94,14 +94,17 @@ _start:
 	call draw_hex_at_cursor
 	pop ax
 
-	cmp al, 'w'
-	je .input_up
-	cmp al, 's'
-	je .input_down
 	cmp al, 'a'
-	je .input_left
+	je .input_dec
 	cmp al, 'd'
-	je .input_right
+	je .input_inc
+
+	inc di ; di was cursor_x, now point to cursor_y
+	cmp al, 'w'
+	je .input_dec
+	cmp al, 's'
+	je .input_inc
+	dec di ; restore di back to cursor_x
 
 	; the next two inputs we check for both rely on this
 	push ax
@@ -136,16 +139,10 @@ _start:
 	aaa
 	mov word [mistakes], ax
 	jmp .input_loop
-.input_up:
-	dec byte [si]
-	jmp .input_loop
-.input_down:
-	inc byte [si]
-	jmp .input_loop
-.input_left:
+.input_dec:
 	dec byte [di]
 	jmp .input_loop
-.input_right:
+.input_inc:
 	inc byte [di]
 	jmp .input_loop
 

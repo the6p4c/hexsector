@@ -225,7 +225,7 @@ draw_hex_at_cursor:
 
 ; cl - hex coord x
 ; dl - hex coord y
-; al - color
+; al - outer color, ah - inner color (ah = 0x00 means don't change)
 draw_hex_at:
 	pusha
 	push ax
@@ -245,22 +245,13 @@ draw_hex_at:
 	mul ah
 	mov dx, ax
 
+	; add vertical offset to odd columns
 	test cl, 1
 	jz .draw
 	add dl, 5
 
 .draw:
 	pop ax
-	call draw_hex
-
-	popa
-	ret
-
-; cl - top left x
-; dl - top left y
-; al - outer color, ah - inner color (ah = 0x00 means don't change)
-draw_hex:
-	pusha
 
 	mov ch, 0
 	shl cx, 1

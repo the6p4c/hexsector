@@ -1,4 +1,4 @@
-%include "map_defs.inc" ; << There's more unnecessary comments in here, too
+%include "map_defs.asm" ; << There's more unnecessary comments in here, too
 
 ; We're building a flat binary, so this isn't actually creating a section .text,
 ; see the comment on `section .bss` near the end of this file for why

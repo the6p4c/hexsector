@@ -6,6 +6,7 @@ clean:
 floppy.img: main.bin maps.bin
 	cat main.bin > floppy.img
 	cat maps.bin >> floppy.img
+	truncate -s 1474560 floppy.img
 
 main.bin: main.asm map_defs.asm
 	nasm -o $@ $<

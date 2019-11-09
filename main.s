@@ -21,9 +21,11 @@ _start:
 	int 0x13
 
 	; initialises cursor_x, cursor_y and mistakes
+	; slightly shorter than manually zeroing each, and also shorter than
+	; two word writes
 	mov ax, 0
 	mov di, cursor_x
-	; cx above will always be >= 2... not great to rely on but will do for now
+	mov cx, 2
 	rep stosw
 
 	; load pointer to font data into es:bp
@@ -52,7 +54,6 @@ _start:
 .input_loop:
 	; print mistakes counter
 	mov cx, 20*8
-	mov dx, 0
 	mov al, byte [mistakes+1]
 	call put_num
 	mov al, byte [mistakes]
@@ -312,21 +313,27 @@ draw_hex:
 	ret
 
 put_num:
-	mov di, 219*16
+	; 219 is a full block, use it to "clear" the background
+	mov di, (219 + 1) * 16
 	mov bl, 0xF
 	call put_char
 
 	mov ah, 0
-	add ax, '0'
+	add ax, '0' + 1
 	shl ax, 4
 	mov di, ax
 	mov bl, 0x4
 	; fall through to put_char
 
+; cx - top right x
+; top y coordinate is always 1
+; di - (c + 1) * 16 where c is the character to draw
+; bl - color
 put_char:
 	pusha
 	mov word [saved_cx], cx
 
+	mov dx, 16
 .draw_line:
 	mov cx, word [saved_cx]
 	mov al, byte [es:bp+di]
@@ -345,10 +352,9 @@ put_char:
 	shr al, 1
 	jnz .draw_pixel
 
-	inc di
-	inc dx
-	cmp dx, 16
-	jne .draw_line
+	dec di
+	dec dx
+	jnz .draw_line
 
 	popa
 	ret

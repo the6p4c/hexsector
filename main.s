@@ -81,12 +81,11 @@ _start:
 	call draw_hex_at_cursor
 
 	int 0x16
-	push ax
 
 	; clear previous cursor position
+	push ax
 	mov ax, 0x000F
 	call draw_hex_at_cursor
-
 	pop ax
 
 	cmp al, 'w'
@@ -97,6 +96,14 @@ _start:
 	je .input_left
 	cmp al, 'd'
 	je .input_right
+
+	; the next two inputs we check for both rely on this
+	push ax
+	call get_map_cell_at_cursor
+	and ah, 0b111
+	mov bl, ah
+	pop ax
+
 	cmp al, 'p'
 	je .input_discover_count
 	cmp al, 'o'
@@ -116,15 +123,11 @@ _start:
 	inc byte [di]
 	jmp .input_loop
 .input_discover_count:
-	call get_map_cell_at_cursor
-	and ah, 0b111
-	cmp ah, 0x7
+	cmp bl, 0x7
 	jl .did_discover
 	jmp .made_mistake
 .input_discover_blue:
-	call get_map_cell_at_cursor
-	and ah, 0b111
-	cmp ah, 0x7
+	cmp bl, 0x7
 	jne .made_mistake
 .did_discover:
 	mov bl, 0b1000

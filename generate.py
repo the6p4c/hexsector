@@ -8,7 +8,11 @@ if len(sys.argv) != 2:
 with open(sys.argv[1], 'r') as f:
     map_data = f.read().strip()
 
-cells = [column.strip().split(' ') for column in map_data.split('\n')]
+cells = [
+    column.strip().split(' ')
+    for column in map_data.split('\n')
+    if column[0] != ';' # filter out comments
+]
 
 num_columns = len(cells)
 num_rows = len(cells[0])

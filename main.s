@@ -104,24 +104,11 @@ _start:
 	mov bl, ah
 	pop ax
 
-	cmp al, 'p'
-	je .input_discover_count
 	cmp al, 'o'
 	je .input_discover_blue
-	jmp .input_loop
+	cmp al, 'p'
+	jne .input_loop
 
-.input_up:
-	dec byte [si]
-	jmp .input_loop
-.input_down:
-	inc byte [si]
-	jmp .input_loop
-.input_left:
-	dec byte [di]
-	jmp .input_loop
-.input_right:
-	inc byte [di]
-	jmp .input_loop
 .input_discover_count:
 	cmp bl, 0x7
 	jl .did_discover
@@ -138,6 +125,18 @@ _start:
 	inc ax
 	aaa
 	mov word [mistakes], ax
+	jmp .input_loop
+.input_up:
+	dec byte [si]
+	jmp .input_loop
+.input_down:
+	inc byte [si]
+	jmp .input_loop
+.input_left:
+	dec byte [di]
+	jmp .input_loop
+.input_right:
+	inc byte [di]
 	jmp .input_loop
 
 ; cl - hex coord x

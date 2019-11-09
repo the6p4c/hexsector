@@ -230,20 +230,20 @@ draw_hex_at:
 	pusha
 	push ax
 
+	; multiplying with mul rather than a combination of shifts and adds is
+	; shorter (byte-wise)
+
 	; multiply x coord by 7
 	mov al, cl
-	shl cl, 1
-	add al, cl
-	shl cl, 1
-	add al, cl
-	mov cl, al
+	mov ah, 7
+	mul ah
+	mov cx, ax
 
 	; multiply y coord by 10
-	shl dl, 1
 	mov al, dl
-	shl al, 2
-	add al, dl
-	mov dl, al
+	mov ah, 10
+	mul ah
+	mov dx, ax
 
 	test cl, 1
 	jz .draw

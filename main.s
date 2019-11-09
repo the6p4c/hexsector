@@ -20,11 +20,16 @@ _start:
 	mov bx, map
 	int 0x13
 
-	; test print
-	mov cx, 20*7
-	mov dx, 0
-	mov di, 'C'*16
-	call put_char
+	; initialises cursor_x, cursor_y and mistakes
+	mov ax, 0
+	mov di, cursor_x
+	; cx above will always be >= 2... not great to rely on but will do for now
+	rep stosw
+
+	; load pointer to font data into es:bp
+	mov ax, 0x1130
+	mov bh, 0x06
+	int 0x10
 
 	mov al, byte [map_max_x]
 	inc al
@@ -44,25 +49,31 @@ _start:
 	sub dl, 1
 	jnc .draw_row
 
-	; initialises both cursor_x and cursor_y
-	mov word [cursor_x], 0
-
 .input_loop:
+	; print mistakes counter
+	mov cx, 20*8
+	mov dx, 0
+	mov al, byte [mistakes+1]
+	call put_num
+	mov al, byte [mistakes]
+	mov cx, 21*8
+	call put_num
+
 	mov di, cursor_x
 	mov si, cursor_y
 
 	; both an coordinate which has gone off the high value edge and one which
 	; has gone past zero will result in big numbers (0 - 1 = 0xFF, which will
 	; always be bigger than the max coord)
-	mov ax, word [map_max_x] ; al = map_max_y, ah = map_max_x
-	cmp byte [di], ah
-	jbe .check_y
-	mov byte [di], 0
-.check_y:
-	cmp byte [si], al
-	jbe .checks_done
-	mov byte [si], 0
-.checks_done:
+;	mov ax, word [map_max_x] ; al = map_max_y, ah = map_max_x
+;	cmp byte [di], ah
+;	jbe .check_y
+;	mov byte [di], 0
+;.check_y:
+;	cmp byte [si], al
+;	jbe .checks_done
+;	mov byte [si], 0
+;.checks_done:
 
 	; draw current cursor
 	mov ax, 0x0002
@@ -108,15 +119,21 @@ _start:
 	and ah, 0b111
 	cmp ah, 0x7
 	jl .did_discover
-	jmp .input_loop
+	jmp .made_mistake
 .input_discover_blue:
 	call get_map_cell_at_cursor
 	and ah, 0b111
 	cmp ah, 0x7
-	jne .input_loop
+	jne .made_mistake
 .did_discover:
 	mov bl, 0b1000
 	call draw_map_cell
+	jmp .input_loop
+.made_mistake:
+	mov ax, word [mistakes]
+	inc ax
+	aaa
+	mov word [mistakes], ax
 	jmp .input_loop
 
 ; cl - hex coord x
@@ -294,15 +311,21 @@ draw_hex:
 	popa
 	ret
 
+put_num:
+	mov di, 219*16
+	mov bl, 0xF
+	call put_char
+
+	mov ah, 0
+	add ax, '0'
+	shl ax, 4
+	mov di, ax
+	mov bl, 0x4
+	; fall through to put_char
+
 put_char:
 	pusha
 	mov word [saved_cx], cx
-
-	push dx
-	mov ax, 0x1130
-	mov bh, 0x06
-	int 0x10
-	pop dx
 
 .draw_line:
 	mov cx, word [saved_cx]
@@ -311,11 +334,12 @@ put_char:
 	test al, 1
 	jz .next
 
-	push ax
-	mov ax, 0x0CFF
+	pusha
+	mov ah, 0x0C
+	mov al, bl
 	mov bx, 0x0001
 	int 0x10
-	pop ax
+	popa
 .next:
 	dec cx
 	shr al, 1
@@ -365,6 +389,7 @@ saved_cx: resw 1
 
 cursor_x: resb 1
 cursor_y: resb 1
+mistakes: resw 1
 
 map: resb 510
 map_max_x: resb 1

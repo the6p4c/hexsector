@@ -53,11 +53,14 @@ _start:
 
 .input_loop:
 	; print mistakes counter
-	mov cx, 20*8
+	; X coordinate calculation looks weird, it's the screen edge minus one (and
+	; minus the width of the other character for the first/left-most digit) to
+	; find the bottom right corner X coordinate
+	mov cx, 320 - 8 * 1 - 1
 	mov al, byte [mistakes+1]
 	call put_num
 	mov al, byte [mistakes]
-	mov cx, 21*8
+	mov cx, 320 - 8 * 0 - 1
 	call put_num
 
 	mov di, cursor_x

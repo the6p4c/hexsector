@@ -2,6 +2,8 @@ hexsector
 =========
 [**> Download floppy.img <**](https://github.com/The6P4C/hexsector/releases/download/v1.0/floppy.img)
 
+[**> Play in-browser <**](https://the6p4c.github.io/hexsector/index.html)
+
 A boot sector sized (510 byte) clone of the game [Hexcells](https://store.steampowered.com/app/265890/Hexcells/). Cheap as chips, great puzzle game - pick it up if you haven't already.
 
 The source code of the game ([main.asm](main.asm)) is extensively commented: please check it out! I've tried to explain why things are written how they are (probably optimisation) and it should be readable if you're semi-familiar with x86 assembly but rusty on real-mode shenanigans.

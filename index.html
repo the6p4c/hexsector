@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+		<meta name="robots" content="index,follow">
+
+		<meta name="generator" content="Pelican">
+
+		<title>hexsector (browser edition)</title>
+
+		<meta name="twitter:site" content="@The6P4C">
+		<meta name="twitter:creator" content="@The6P4C">
+
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+	</head>
+	<body>
+		<div class="container">
+			<h1>hexsector (browser edition)</h1>
+			<div class="row">
+				<div class="col-sm">
+					<ul>
+						<li>want to play a slow, feature-incomplete version of <a href="https://store.steampowered.com/app/265890/Hexcells/">hexcells</a> in your browser?</li>
+						<li>now you can</li>
+						<li>it fits in a <strong>boot <em><mark>sector</mark></em></strong>, that's the gimmick
+							<ul>
+								<li>that's 510 bytes o' code</li>
+								<li>the maps don't fit but cut me some slack</li>
+							</ul>
+						</li>
+						<li><strong>go <a href="https://github.com/The6P4C/hexsector/blob/master/main.asm">read the code</a> (lots of comments)</strong></li>
+					</ul>
+
+					<h2>controls</h2>
+					<ul>
+						<li><strong>w</strong>, <strong>s</strong>, <strong>a</strong>, <strong>d</strong> - move your cursor (green)</li>
+						<li><strong>o</strong> - uncover blue hex</li>
+						<li><strong>p</strong> - uncover grey hex</li>
+					</ul>
+
+					<p>the number of neighbours is indicated by the number of dots in the grey hex</p>
+
+					<p>your mistakes are tracked in the top right</p>
+					
+					<p><em>have fun</em></p>
+				</div>
+				<div class="col-sm-auto align-self-center">
+					<div id="screen-container" class="mb-sm-3">
+						<div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
+						<canvas style="display: none"></canvas>
+					</div>
+					<form>
+						<div class="form-group row">
+							<label class="col-sm-3 col-form-label" for="level">level</label>
+							<div class="col-sm-9">
+								<input id="level" class="form-control" type="number" min=1 max=4 value=4>
+							</div>
+						</div>
+						<button id="button-reset" class="btn btn-primary">reset</button>
+					</form>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-auto">
+					<p class="mt-sm-5">made with ❤&#xFE0F; by <a href="https://twitter.com/The6P4C">@The6P4C</a> / <a href="https://the6p4c.github.io/">the6p4c.github.io</a></p>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-auto">
+					<p><small>implemented with <a href="https://github.com/copy/v86">v86</a></small></p>
+				</div>
+			</div>
+		</div>
+
+		<script src="vendor/v86/v86.js"></script>
+		<script>
+var globals = {};
+fetch("hexsector.img").then(response => response.arrayBuffer()).then(img => {
+	globals.hexsector = img;
+
+	globals.emu = new V86Starter({
+		screen_container: document.getElementById("screen-container"),
+		bios: { url: "vendor/v86/bios/seabios.bin" },
+		vga_bios: { url: "vendor/v86/bios/vgabios.bin" },
+		fda: { buffer: globals.hexsector },
+		autostart: true
+	});
+});
+
+function reset() {
+	var level = parseInt(document.getElementById("level").value) + 1;
+	console.log(level);
+	new DataView(globals.hexsector).setUint8(0x1C + 1, level);
+	globals.emu.restart();
+
+}
+document.getElementById("button-reset").addEventListener("click", reset);
+document.getElementById("level").addEventListener("change", reset);
+		</script>
+	</body>
+</html>
